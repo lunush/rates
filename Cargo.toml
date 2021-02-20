@@ -1,5 +1,5 @@
 [package]
-name = "rust-currency-price-cli"
+name = "coin"
 version = "0.1.0"
 authors = ["user"]
 edition = "2018"
@@ -11,3 +11,4 @@ reqwest = { version = "0.11", features = ["json"] }
 tokio = { version = "1", features = ["full"] }
 serde = "*"
 serde_json = "*"
+clap = "2.33.3"
