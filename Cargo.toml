@@ -1,8 +1,9 @@
 [package]
-name = "coin"
+name = "rates"
 version = "0.1.0"
 authors = ["user"]
 edition = "2018"
+description = "Scriptable and CLI tool and library"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
