@@ -8,8 +8,10 @@ description = "Scriptable and CLI tool and library"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-reqwest = { version = "0.11", features = ["json"] }
+reqwest = { version = "0.11", features = ["json", "blocking"] }
 tokio = { version = "1", features = ["full"] }
 serde = "*"
 serde_json = "*"
-clap = "2.33.3"
+clap = "2.33"
+directories = "3.0"
+chrono = "0.4"
