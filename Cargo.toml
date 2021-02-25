@@ -3,7 +3,7 @@ name = "rates"
 version = "0.1.0"
 authors = ["lunush"]
 edition = "2018"
-description = "Scriptable and CLI tool and library"
+description = "CLI tool to get currency exchange rates in your terminal"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
