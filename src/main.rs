@@ -181,6 +181,12 @@ fn main() -> Result<(), std::io::Error> {
                 .long("short")
                 .help("Show only the result value"),
         )
+        .arg(
+            Arg::with_name("trim")
+                .short("t")
+                .long("trim")
+                .help("Trim the decimal part of the output"),
+        )
         .get_matches();
 
     // Define values
@@ -192,9 +198,14 @@ fn main() -> Result<(), std::io::Error> {
     let from = String::from(cli.value_of("from").unwrap().to_uppercase());
     let to = String::from(cli.value_of("to").unwrap().to_uppercase());
     let short = cli.is_present("short");
+    let trim = cli.is_present("trim");
     let (crypto_list, fiat_list) = init_currency_data()?;
 
-    let to_val = get_rate(&from, &to, crypto_list, fiat_list).unwrap() * &amount;
+    let mut to_val = get_rate(&from, &to, crypto_list, fiat_list).unwrap() * &amount;
+
+    if trim == true {
+        to_val = to_val.round();
+    }
 
     if short == true {
         println!("{}", to_val);
