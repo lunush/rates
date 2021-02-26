@@ -4,6 +4,17 @@ version = "0.1.0"
 authors = ["lunush"]
 edition = "2018"
 description = "CLI tool to get currency exchange rates in your terminal"
+license = "Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/lunush/rates"
+homepage = "https://rates.rs/"
+include = [
+	"src/**/*",
+	"Cargo.toml",
+	"README.md"
+]
+categories = ["command-line-interface"]
+keywords = ["exchange rates", "fiat currency", "cryptocurrency"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
