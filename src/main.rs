@@ -173,7 +173,7 @@ fn main() -> Result<(), std::io::Error> {
                 .short("a")
                 .long("amount")
                 .takes_value(true)
-                .help("Amount of a given currency. Defaults to 1"),
+                .help("Amount of the currency user converts to. Defaults to 1"),
         )
         .arg(
             Arg::with_name("short")
