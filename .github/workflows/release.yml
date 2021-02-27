@@ -10,7 +10,7 @@
 #
 # The key here is that we create the release only once.
 
-name: release
+name: Release
 on:
   push:
     tags:
