@@ -179,6 +179,12 @@ fn main() -> Result<(), std::io::Error> {
                 .long("trim")
                 .help("Trim the decimal part of the output"),
         )
+        .arg(
+            Arg::with_name("no formatting")
+                .short("F")
+                .long("no-formatting")
+                .help("Do not remove digits after decimal point"),
+        )
         .get_matches();
 
     // Define values
@@ -191,6 +197,7 @@ fn main() -> Result<(), std::io::Error> {
     let to = String::from(cli.value_of("to").unwrap().to_uppercase());
     let short = cli.is_present("short");
     let trim = cli.is_present("trim");
+    let no_formatting = cli.is_present("no formatting");
     let (crypto_list, fiat_list) = init_currency_data()?;
 
     let mut to_val = get_rate(&from, &to, crypto_list, fiat_list).unwrap() * &amount;
@@ -198,7 +205,7 @@ fn main() -> Result<(), std::io::Error> {
     // If trim set to true, trim all decimals. Show some decimals otherwise.
     if trim == true {
         to_val = to_val.floor();
-    } else {
+    } else if no_formatting == false {
         // 2 decimals if to_val > 1
         // 3 decimals if to_val > .1
         // 4 decimals if to_val > .01
