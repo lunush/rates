@@ -15,4 +15,4 @@ Alternatively, you can download the binary from the
 
 
 ## License
-Apache 2.0
+Apache 2.0 or MIT, at your choice.
