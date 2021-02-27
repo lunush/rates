@@ -80,15 +80,7 @@ fn cache_data(path: &String, data: &String) {
     }
 }
 
-fn fetch_fiat_list() -> Result<String, reqwest::Error> {
-    let url = "https://api.ratesapi.io/api/latest?base=USD";
-    let body = reqwest::blocking::get(url)?.text()?;
-
-    Ok(body)
-}
-
-fn fetch_crypto_list() -> Result<String, reqwest::Error> {
-    let url = "https://api.coinranking.com/v2/coins";
+fn fetch_data(url: &str) -> Result<String, reqwest::Error> {
     let body = reqwest::blocking::get(url)?.text()?;
 
     Ok(body)
@@ -126,8 +118,8 @@ fn init_currency_data() -> Result<(String, String), std::io::Error> {
             const HOUR: i64 = 3600;
 
             if last_update_time + HOUR * 3 < now {
-                crypto_list = fetch_crypto_list().unwrap();
-                fiat_list = fetch_fiat_list().unwrap();
+                crypto_list = fetch_data("https://api.coinranking.com/v2/coins").unwrap();
+                fiat_list = fetch_data("https://api.ratesapi.io/api/latest?base=USD").unwrap();
 
                 cache_data(&crypto_list_path, &crypto_list);
                 cache_data(&fiat_list_path, &fiat_list);
@@ -138,8 +130,8 @@ fn init_currency_data() -> Result<(String, String), std::io::Error> {
             }
         }
         Err(_) => {
-            crypto_list = fetch_crypto_list().unwrap();
-            fiat_list = fetch_fiat_list().unwrap();
+            crypto_list = fetch_data("https://api.coinranking.com/v2/coins").unwrap();
+            fiat_list = fetch_data("https://api.ratesapi.io/api/latest?base=USD").unwrap();
 
             cache_data(&crypto_list_path, &crypto_list);
             cache_data(&fiat_list_path, &fiat_list);
