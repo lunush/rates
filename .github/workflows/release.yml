@@ -161,7 +161,9 @@ jobs:
         run: |
           outdir=${{ env.TARGET_DIR }}
           staging="rates-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
-          mkdir -p "$staging"/{complete,doc}
+          mkdir -p "$staging"/doc
+          cp {README.md,LICENSE-APACHE,LICENSE-MIT} "$staging/"
+
           if [ "${{ matrix.os }}" = "windows-2019" ]; then
             cp "target/release/rates.exe" "$staging/"
             7z a "$staging.zip" "$staging"

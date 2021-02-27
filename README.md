@@ -10,9 +10,8 @@ cargo install rates
 ```
 
 ### Releases
-Alternatively, you can download the binary from the
+Alternatively, you can download a binary for your system from the
 [releases](https://github.com/lunush/rates/releases) page
-
 
 ## License
 Apache 2.0 or MIT, at your choice.
