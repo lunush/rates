@@ -1,6 +1,6 @@
 # Rates
 ![Usage example](images/example.svg)
-Rates is a scriptable CLI tool that brings currency exchange rates right in your terminal and supports 30+ fiat and 10K+ crypto currencies.
+Rates is a scriptable CLI tool that brings currency exchange rates right into your terminal and supports 30+ fiat and 10K+ crypto currencies.
 
 ## Installation
 ### Cargo
