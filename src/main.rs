@@ -149,13 +149,13 @@ fn main() -> Result<(), std::io::Error> {
         .about(crate_description!())
         .author(crate_authors!())
         .arg(
-            Arg::with_name("from")
+            Arg::with_name("FROM")
                 .help("Currency you want to convert from")
                 .required(true)
                 .index(1),
         )
         .arg(
-            Arg::with_name("to")
+            Arg::with_name("TO")
                 .help("Currency you want to convert to")
                 .required(true)
                 .index(2),
@@ -193,8 +193,8 @@ fn main() -> Result<(), std::io::Error> {
     } else {
         1.0
     };
-    let from = String::from(cli.value_of("from").unwrap().to_uppercase());
-    let to = String::from(cli.value_of("to").unwrap().to_uppercase());
+    let from = String::from(cli.value_of("FROM").unwrap().to_uppercase());
+    let to = String::from(cli.value_of("TO").unwrap().to_uppercase());
     let short = cli.is_present("short");
     let trim = cli.is_present("trim");
     let no_formatting = cli.is_present("no formatting");
