@@ -195,8 +195,35 @@ fn main() -> Result<(), std::io::Error> {
 
     let mut to_val = get_rate(&from, &to, crypto_list, fiat_list).unwrap() * &amount;
 
+    // If trim set to true, trim all decimals. Show some decimals otherwise.
     if trim == true {
-        to_val = to_val.round();
+        to_val = to_val.floor();
+    } else {
+        // 2 decimals if to_val > 1
+        // 3 decimals if to_val > .1
+        // 4 decimals if to_val > .01
+        // etc
+        let digits = to_val.to_string().chars().collect::<Vec<_>>();
+        let mut decimal_length = 3;
+
+        // Find the decimal point index
+        let point_index = digits.iter().position(|x| *x == '.').unwrap();
+
+        // If to_val < 1, search for the first 0 and when found trim the rest - 2.
+        if digits[point_index + 1].to_digit(10).unwrap() < 1 {
+            for digit in point_index + 1..digits.len() {
+                if digits[digit] != '0' {
+                    break;
+                }
+                decimal_length += 1;
+            }
+        }
+
+        to_val = digits[0..point_index + decimal_length]
+            .iter()
+            .collect::<String>()
+            .parse::<f64>()
+            .unwrap();
     }
 
     if short == true {
