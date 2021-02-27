@@ -117,6 +117,8 @@ jobs:
       - name: Use Cross
         # if: matrix.os != 'windows-2019'
         run: |
+          # Temporary workaround for OpenSSL issue
+          # See: https://github.com/rust-embedded/cross/issues/229
           cargo install --version 0.1.16 cross
           echo "CARGO=cross" >> $GITHUB_ENV
           echo "TARGET_FLAGS=--target ${{ matrix.target }}" >> $GITHUB_ENV
