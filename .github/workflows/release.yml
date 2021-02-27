@@ -105,7 +105,7 @@ jobs:
         if: matrix.os == 'ubuntu-18.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends xz-utils liblz4-tool musl-tools
+          sudo apt-get install -y --no-install-recommends xz-utils liblz4-tool musl-tools openssl
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
