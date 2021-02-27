@@ -1,0 +1,50 @@
+name: Continuous Integration
+
+on: [push, pull_request]
+
+jobs:
+  macos:
+    name: macOS
+    runs-on: macOS-latest
+    strategy:
+      matrix:
+        action:
+          - check
+          - build
+          - test
+          - cargo-publish
+    steps:
+      - uses: actions/checkout@v2
+      - name: Action
+        run: make ${{ matrix.action }}
+      - name: Check Carge.lock
+        run: git diff --exit-code
+
+  ubuntu:
+    name: Ubuntu
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        action:
+          - check
+          - build
+          - test
+          - cargo-publish
+    steps:
+      - uses: actions/checkout@v2
+      - name: Action
+        run: make ${{ matrix.action }}
+
+  Windows:
+    runs-on: windows-2019
+    strategy:
+      matrix:
+        action:
+          - check
+          - build
+          - test
+          - cargo-publish
+    steps:
+      - uses: actions/checkout@v2
+      - name: Action
+        run: make ${{ matrix.action }}
