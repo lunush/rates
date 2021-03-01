@@ -19,9 +19,14 @@ keywords = ["exchange-rates", "fiat-currency", "cryptocurrency"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+trust-dns-resolver = "0.20.0"
 reqwest = { version = "0.11", features = ["blocking", "json"] }
 serde = "1.0"
 serde_json = "1.0"
 clap = "2.33"
 directories = "3.0"
 chrono = "0.4"
+
+[features]
+default = ["reqwest/default-tls", "trust-dns-resolver/dns-over-native-tls"]
+rustls = ["reqwest/rustls-tls", "trust-dns-resolver/dns-over-rustls"]

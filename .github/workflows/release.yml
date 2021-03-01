@@ -13,12 +13,18 @@
 name: Release
 on:
   push:
+    # Enable when testing release infrastructure on a branch.
+    # branches:
+    # - ag/release
     tags:
-      - "*"
+      - "[0-9]+.[0-9]+.[0-9]+"
 jobs:
   create-release:
     name: create-release
     runs-on: ubuntu-latest
+    # env:
+    # Set to force version number, e.g., when no tag exists.
+    # RATES_VERSION: TEST-0.0.0
     steps:
       - name: Create artifacts directory
         run: mkdir artifacts
@@ -31,6 +37,7 @@ jobs:
           # See: https://github.community/t5/GitHub-Actions/How-to-get-just-the-tag-name/m-p/32167/highlight/true#M1027
           echo "RATES_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
           echo "version is: ${{ env.RATES_VERSION }}"
+
       - name: Create GitHub release
         id: release
         uses: actions/create-release@v1
@@ -61,7 +68,9 @@ jobs:
       # systems.
       CARGO: cargo
       # When CARGO is set to CROSS, this is set to `--target matrix.target`.
-      TARGET_FLAGS:
+      TARGET_ARCH:
+      # When CARGO is set to CROSS, this is set to `--features matrix.features`.
+      TARGET_FEATURES:
       # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
       TARGET_DIR: ./target
       # Emit backtraces on panics.
@@ -74,26 +83,43 @@ jobs:
             os: ubuntu-18.04
             rust: stable
             target: x86_64-unknown-linux-musl
+            features: rustls
+            openssl_args: linux-aarch64 aarch64-linux-musl-
+
           - build: linux-arm
             os: ubuntu-18.04
             rust: stable
             target: arm-unknown-linux-gnueabihf
+            features: rustls
+            openssl_args: linux-armv4 arm-linux-gnueabihf-
+
           - build: macos
             os: macos-latest
             rust: stable
             target: x86_64-apple-darwin
+            features: rustls
+            openssl_args:
+
           - build: win-msvc
             os: windows-2019
             rust: stable
             target: x86_64-pc-windows-msvc
+            features: rustls
+            openssl_args:
+
           - build: win-gnu
             os: windows-2019
-            rust: stable-x86_64-gnu
+            rust: stable
             target: x86_64-pc-windows-gnu
+            features: rustls
+            openssl_args:
+
           - build: win32-msvc
             os: windows-2019
             rust: stable
             target: i686-pc-windows-msvc
+            features: rustls
+            openssl_args:
 
     steps:
       - name: Checkout repository
@@ -106,6 +132,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends liblz4-tool musl-tools
+
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -115,19 +142,19 @@ jobs:
           target: ${{ matrix.target }}
 
       - name: Use Cross
-        # if: matrix.os != 'windows-2019'
         run: |
-          # Temporary workaround for OpenSSL issue
-          # See: https://github.com/rust-embedded/cross/issues/229
-          cargo install --version 0.1.16 cross
+          cargo install cross
           echo "CARGO=cross" >> $GITHUB_ENV
-          echo "TARGET_FLAGS=--target ${{ matrix.target }}" >> $GITHUB_ENV
-          echo "TARGET_DIR=target/${{ matrix.target }}" >> $GITHUB_ENV
+          echo "TARGET_ARCH=--target ${{ matrix.target }}" >> $GITHUB_ENV
+          echo "TARGET_FEATURES=--features ${{ matrix.feautres }}" >> $GITHUB_ENV
+          echo "TARGET_DIR=./target/${{ matrix.target }}" >> $GITHUB_ENV
+
       - name: Show command used for Cargo
         run: |
           echo "cargo command is: ${{ env.CARGO }}"
-          echo "target flag is: ${{ env.TARGET_FLAGS }}"
+          echo "target flag is: ${{ env.TARGET_ARCH }}"
           echo "target dir is: ${{ env.TARGET_DIR }}"
+
       - name: Get release download URL
         uses: actions/download-artifact@v1
         with:
@@ -143,8 +170,19 @@ jobs:
           release_version="$(cat artifacts/release-version)"
           echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
           echo "release version: $RELEASE_VERSION"
+
+      - name: Build release binary (linux)
+        if: matrix.build == 'linux' || matrix.build == 'linux-arm'
+        run: |
+          echo "OPENSSL_DIR=/openssl" >> $GITHUB_ENV
+          echo "OPENSSL_INCLUDE_DIR=/openssl/include" >> $GITHUB_ENV
+          echo "OPENSSL_LIB_DIR=/openssl/lib" >> $GITHUB_ENV
+          ci/openssl ${{ matrix.opessl_args }}
+          ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_ARCH }}
+
       - name: Build release binary
-        run: ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
+        if: matrix.build != 'linux' || matrix.build != 'linux-arm'
+        run: ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_ARCH }}
 
       - name: Strip release binary (linux and macos)
         if: matrix.build == 'linux' || matrix.build == 'macos'
@@ -158,23 +196,27 @@ jobs:
             rustembedded/cross:arm-unknown-linux-gnueabihf \
             arm-linux-gnueabihf-strip \
             /target/arm-unknown-linux-gnueabihf/release/rates
+
       - name: Build archive
         shell: bash
         run: |
-          outdir=${{ env.TARGET_DIR }}
+          outdir="$(ci/cargo-out-dir "${{ env.TARGET_DIR }}")"
           staging="rates-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
           mkdir -p "$staging"
+
           cp {README.md,LICENSE-APACHE,LICENSE-MIT} "$staging/"
 
           if [ "${{ matrix.os }}" = "windows-2019" ]; then
-            cp "target/release/rates.exe" "$staging/"
+            cp "target/${{ matrix.target }}/release/rates.exe" "$staging/"
             7z a "$staging.zip" "$staging"
             echo "ASSET=$staging.zip" >> $GITHUB_ENV
           else
+            # The man page is only generated on Unix systems. ¯\_(ツ)_/¯
             cp "target/${{ matrix.target }}/release/rates" "$staging/"
             tar czf "$staging.tar.gz" "$staging"
             echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
           fi
+
       - name: Upload release archive
         uses: actions/upload-release-asset@v1.0.1
         env:
