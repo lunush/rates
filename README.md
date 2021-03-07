@@ -3,19 +3,19 @@
 Rates is a scriptable CLI tool that brings currency exchange rates right into your terminal and supports 30+ fiat and 10K+ crypto currencies.
 
 ## Installation
-### [Cargo](https://crates.io/crates/rates)
+### Cargo
 If you have [Rust](https://rustup.rs/) installed, you can get the binary by
 running:
 ```sh
 cargo install rates
 ```
 
-### [pkgsrc](https://pkgsrc.se/finance/rates)
+### pkgsrc
 ```sh
 pkgin install rates
 ```
 
-### [Releases](https://github.com/lunush/rates/releases)
+### Releases
 Alternatively, you can download a binary for your system from the
 [releases](https://github.com/lunush/rates/releases) page
 
@@ -27,6 +27,7 @@ Alternatively, you can download a binary for your system from the
 * Add `--max` and `--min` flags that return maximum and minimum value for a given period
 * Add `--close`, `--adjusted-close`, and `--open` flags that return close, adjusted close, or open value for a given period
 * Add `--csv <location>` flag that returns data in a csv file
+* Add `--json <location>` flag that returns data in a json file
 * Add aliaces for symbols, e.g. bitcoin = btc, gold = xau
 * (maybe) Add volume subcommand that:
   - By default, accepts one value and returns its volume if available.
