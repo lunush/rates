@@ -28,6 +28,8 @@ Alternatively, you can download a binary for your system from the
 * Add `--close`, `--adjusted-close`, and `--open` flags that return close, adjusted close, or open value for a given period
 * Add `--csv <location>` flag that returns data in a csv file
 * Add `--json <location>` flag that returns data in a json file
+* Add `--force-update` flag to fetch new data
+* Add ability to set caching interval via environmetal variables
 * Add aliaces for symbols, e.g. bitcoin = btc, gold = xau
 * (maybe) Add volume subcommand that:
   - By default, accepts one value and returns its volume if available.
