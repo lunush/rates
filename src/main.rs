@@ -96,7 +96,7 @@ fn init_currency_data() -> Result<(String, String), std::io::Error> {
 
     // Create cache directory if it doesn't exist
     match create_dir_all(&cache_dir) {
-        Err(why) => panic!("Unable to create {} folder:\n\n{}", &cache_dir, why),
+        Err(why) => panic!("Unable to create {} folder:\n\n{}", cache_dir, why),
         Ok(_) => (),
     };
 
