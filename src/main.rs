@@ -90,15 +90,9 @@ fn init_currency_data() -> Result<(String, String), std::io::Error> {
     // Define paths to cached files
     let proj_dirs = ProjectDirs::from("rs", "Lunush", "Rates").unwrap();
     let cache_dir = proj_dirs.cache_dir().to_str().unwrap().to_owned();
-    let crypto_list_path = format!(
-        "{}/crypto_list.json",
-        proj_dirs.cache_dir().to_str().unwrap()
-    )[..]
-        .to_owned();
-    let fiat_list_path =
-        format!("{}/fiat_list.json", proj_dirs.cache_dir().to_str().unwrap())[..].to_owned();
-    let last_update_path =
-        format!("{}/last_update", proj_dirs.cache_dir().to_str().unwrap())[..].to_owned();
+    let crypto_list_path = format!("{}/crypto_list.json", cache_dir)[..].to_owned();
+    let fiat_list_path = format!("{}/fiat_list.json", cache_dir)[..].to_owned();
+    let last_update_path = format!("{}/last_update", cache_dir)[..].to_owned();
 
     // Create cache directory if it doesn't exist
     match create_dir_all(&cache_dir) {
