@@ -4,8 +4,6 @@ Rates is a scriptable CLI tool that brings currency exchange rates right into yo
 
 ## Installation
 ### [Cargo](https://crates.io/crates/rates)
-If you have [Rust](https://rustup.rs/) installed, you can get the binary by
-running:
 ```sh
 cargo install rates
 ```
@@ -13,6 +11,11 @@ cargo install rates
 ### [pkgsrc](https://pkgsrc.se/finance/rates)
 ```sh
 pkgin install rates
+```
+
+### [AUR](https://aur.archlinux.org/packages/rates-git/)
+```sh
+paru -Syu rates-git
 ```
 
 ### [Releases](https://github.com/lunush/rates/releases)
