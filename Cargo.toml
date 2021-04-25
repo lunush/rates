@@ -1,6 +1,6 @@
 [package]
 name = "rates"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["lunush"]
 edition = "2018"
 description = "CLI tool to get currency exchange rates in your terminal"
@@ -19,14 +19,9 @@ keywords = ["exchange-rates", "fiat-currency", "cryptocurrency"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-trust-dns-resolver = "0.20.0"
-reqwest = { version = "0.11", features = ["blocking", "json"] }
+reqwest = { version = "0.11", features = ["blocking", "json", "rustls-tls"], default-features = false }
 serde = "1.0"
 serde_json = "1.0"
 clap = "2.33"
 directories = "3.0"
 chrono = "0.4"
-
-[features]
-default = ["reqwest/default-tls", "trust-dns-resolver/dns-over-native-tls"]
-rustls = ["reqwest/rustls-tls", "trust-dns-resolver/dns-over-rustls"]

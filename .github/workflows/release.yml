@@ -83,43 +83,31 @@ jobs:
             os: ubuntu-18.04
             rust: stable
             target: x86_64-unknown-linux-musl
-            features: rustls
-            openssl_args: linux-aarch64 aarch64-linux-musl-
 
           - build: linux-arm
             os: ubuntu-18.04
             rust: stable
             target: arm-unknown-linux-gnueabihf
-            features: rustls
-            openssl_args: linux-armv4 arm-linux-gnueabihf-
 
           - build: macos
             os: macos-latest
             rust: stable
             target: x86_64-apple-darwin
-            features: rustls
-            openssl_args:
 
           - build: win-msvc
             os: windows-2019
             rust: stable
             target: x86_64-pc-windows-msvc
-            features: rustls
-            openssl_args:
 
           - build: win-gnu
             os: windows-2019
             rust: stable
             target: x86_64-pc-windows-gnu
-            features: rustls
-            openssl_args:
 
           - build: win32-msvc
             os: windows-2019
             rust: stable
             target: i686-pc-windows-msvc
-            features: rustls
-            openssl_args:
 
     steps:
       - name: Checkout repository
@@ -146,7 +134,6 @@ jobs:
           cargo install cross
           echo "CARGO=cross" >> $GITHUB_ENV
           echo "TARGET_ARCH=--target ${{ matrix.target }}" >> $GITHUB_ENV
-          echo "TARGET_FEATURES=--features ${{ matrix.feautres }}" >> $GITHUB_ENV
           echo "TARGET_DIR=./target/${{ matrix.target }}" >> $GITHUB_ENV
 
       - name: Show command used for Cargo
@@ -174,10 +161,6 @@ jobs:
       - name: Build release binary (linux)
         if: matrix.build == 'linux' || matrix.build == 'linux-arm'
         run: |
-          echo "OPENSSL_DIR=/openssl" >> $GITHUB_ENV
-          echo "OPENSSL_INCLUDE_DIR=/openssl/include" >> $GITHUB_ENV
-          echo "OPENSSL_LIB_DIR=/openssl/lib" >> $GITHUB_ENV
-          ci/openssl ${{ matrix.opessl_args }}
           ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_ARCH }}
 
       - name: Build release binary
@@ -200,18 +183,18 @@ jobs:
       - name: Build archive
         shell: bash
         run: |
-          outdir="$(ci/cargo-out-dir "${{ env.TARGET_DIR }}")"
+          outdir="${{ env.TARGET_DIR }}"
           staging="rates-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
           mkdir -p "$staging"
 
           cp {README.md,LICENSE-APACHE,LICENSE-MIT} "$staging/"
 
           if [ "${{ matrix.os }}" = "windows-2019" ]; then
-            cp "target/${{ matrix.target }}/release/rates.exe" "$staging/"
+            ls
+            cp "target/release/rates.exe" "$staging/"
             7z a "$staging.zip" "$staging"
             echo "ASSET=$staging.zip" >> $GITHUB_ENV
           else
-            # The man page is only generated on Unix systems. ¯\_(ツ)_/¯
             cp "target/${{ matrix.target }}/release/rates" "$staging/"
             tar czf "$staging.tar.gz" "$staging"
             echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
