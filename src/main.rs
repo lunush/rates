@@ -1,11 +1,8 @@
-#[macro_use]
-extern crate clap;
-
 use std::fs::{create_dir_all, read_to_string, write};
 
 use chrono::prelude::*;
-use clap::{App, Arg};
 use directories::ProjectDirs;
+use structopt::StructOpt;
 
 fn get_rate(
     from: &str,
@@ -136,62 +133,101 @@ fn init_currency_data() -> Result<(String, String), std::io::Error> {
     Ok((crypto_list.to_owned(), fiat_list.to_owned()))
 }
 
+#[derive(Debug, StructOpt)]
+#[structopt(name = "rates", about = "Get financial data in your terminal")]
+struct Args {
+    /// First value
+    // brbrbr
+    arg1: Option<String>,
+
+    /// Second value
+    // brbrbr
+    arg2: Option<String>,
+
+    /// Third value
+    // brbrbr
+    arg3: Option<String>,
+
+    /// Activate debug mode
+    // short and long flags (-d, --debug) will be deduced from the field's name
+    #[structopt(short = "s", long = "short")]
+    short: bool,
+
+    /// Activate debug mode
+    // short and long flags (-d, --debug) will be deduced from the field's name
+    #[structopt(short = "t", long = "trim")]
+    trim: bool,
+
+    /// Activate debug mode
+    // short and long flags (-d, --debug) will be deduced from the field's name
+    #[structopt(short = "F", long = "no-formatting")]
+    no_formatting: bool,
+
+    /// Activate debug mode
+    // short and long flags (-d, --debug) will be deduced from the field's name
+    #[structopt(short = "d", long = "debug")]
+    debug: bool,
+}
+
+#[derive(Debug)]
+struct ParsedArgs {
+    from: String,
+    to: String,
+    amount: f64,
+}
+
+fn parse_args(args: &Args) -> ParsedArgs {
+    let arg1 = args.arg1.clone();
+    let arg2 = args.arg2.clone();
+    let arg3 = args.arg3.clone();
+
+    if arg1.clone().is_none() {
+        panic!("At least one argument to convert from is expected");
+    }
+
+    let is_arg1_num = arg1.clone().unwrap().parse::<f64>().is_ok();
+
+    let amount: f64;
+    let from: String;
+    let to: String;
+
+    if is_arg1_num {
+        amount = arg1.unwrap().parse::<f64>().unwrap();
+
+        from = arg2.unwrap().to_uppercase();
+
+        to = if arg3.is_some() {
+            arg3.unwrap().to_uppercase()
+        } else {
+            "USD".to_owned()
+        };
+    } else {
+        amount = 1.0;
+
+        from = if arg1.is_some() {
+            arg1.clone().unwrap().to_uppercase()
+        } else {
+            panic!("At least one argument to convert from is expected");
+        };
+
+        to = if arg2.is_some() {
+            arg2.unwrap().to_uppercase()
+        } else {
+            "USD".to_owned()
+        };
+    }
+
+    ParsedArgs { from, to, amount }
+}
+
 fn main() -> Result<(), std::io::Error> {
-    // Initialize CLI
-    let cli = App::new("Rates")
-        .version(crate_version!())
-        .about(crate_description!())
-        .author(crate_authors!())
-        .arg(
-            Arg::with_name("FROM")
-                .help("Currency you want to convert from")
-                .required(true)
-                .index(1),
-        )
-        .arg(
-            Arg::with_name("TO")
-                .help("Currency you want to convert to")
-                .required(true)
-                .index(2),
-        )
-        .arg(
-            Arg::with_name("amount")
-                .short("a")
-                .long("amount")
-                .takes_value(true)
-                .help("Amount of the currency user converts to. Defaults to 1"),
-        )
-        .arg(
-            Arg::with_name("short")
-                .short("s")
-                .long("short")
-                .help("Show only the result value"),
-        )
-        .arg(
-            Arg::with_name("trim")
-                .short("t")
-                .long("trim")
-                .help("Trim the decimal part of the output"),
-        )
-        .arg(
-            Arg::with_name("no formatting")
-                .short("F")
-                .long("no-formatting")
-                .help("Do not remove digits after decimal point"),
-        )
-        .get_matches();
+    let args = Args::from_args();
+    let ParsedArgs { from, to, amount } = parse_args(&args);
 
     // Define values
-    let amount = if cli.is_present("amount") == true {
-        cli.value_of("amount").unwrap().parse::<f64>().unwrap()
-    } else {
-        1.0
-    };
-    let from = String::from(cli.value_of("FROM").unwrap().to_uppercase());
-    let to = String::from(cli.value_of("TO").unwrap().to_uppercase());
-    let short = cli.is_present("short");
-    let trim = cli.is_present("trim");
-    let no_formatting = cli.is_present("no formatting");
+    let short = args.short;
+    let trim = args.trim;
+    let no_formatting = args.no_formatting;
     let (crypto_list, fiat_list) = init_currency_data()?;
 
     let mut to_val = get_rate(&from, &to, crypto_list, fiat_list).unwrap() * &amount;
@@ -231,7 +267,7 @@ fn main() -> Result<(), std::io::Error> {
         println!("{}", to_val);
     } else {
         println!("{} {} = {} {}", amount, from, to_val, to);
-    }
+    };
 
     Ok(())
 }
