@@ -136,37 +136,26 @@ fn init_currency_data() -> Result<(String, String), std::io::Error> {
 #[derive(Debug, StructOpt)]
 #[structopt(name = "rates", about = "Get financial data in your terminal")]
 struct Args {
-    /// First value
-    // brbrbr
+    /// (Optional) Amount of currency to convert from
     arg1: Option<String>,
 
-    /// Second value
-    // brbrbr
+    /// Currency to convert from
     arg2: Option<String>,
 
-    /// Third value
-    // brbrbr
+    /// (Optional) Currency to convert to. Defaults to USD if not provided
     arg3: Option<String>,
 
-    /// Activate debug mode
-    // short and long flags (-d, --debug) will be deduced from the field's name
+    /// Show only the result
     #[structopt(short = "s", long = "short")]
     short: bool,
 
-    /// Activate debug mode
-    // short and long flags (-d, --debug) will be deduced from the field's name
+    /// Trim the digits after decimal point, if any
     #[structopt(short = "t", long = "trim")]
     trim: bool,
 
-    /// Activate debug mode
-    // short and long flags (-d, --debug) will be deduced from the field's name
+    /// Do not format the result
     #[structopt(short = "F", long = "no-formatting")]
     no_formatting: bool,
-
-    /// Activate debug mode
-    // short and long flags (-d, --debug) will be deduced from the field's name
-    #[structopt(short = "d", long = "debug")]
-    debug: bool,
 }
 
 #[derive(Debug)]
