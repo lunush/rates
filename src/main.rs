@@ -244,11 +244,11 @@ fn main() -> Result<(), std::io::Error> {
         let mut decimal_length = 3;
 
         // Find the decimal point index
-        let point_index = digits.iter().position(|x| *x == '.').unwrap();
+        let decimal_point_index = digits.iter().position(|x| *x == '.').unwrap();
 
         // If to_val < 1, search for the first 0 and when found trim the rest - 2.
-        if digits[point_index + 1].to_digit(10).unwrap() < 1 {
-            for digit in point_index + 1..digits.len() {
+        if to_val < 1.0 && digits[decimal_point_index + 1].to_digit(10).unwrap() == 0 {
+            for digit in decimal_point_index + 1..digits.len() {
                 if digits[digit] != '0' {
                     break;
                 }
@@ -256,7 +256,7 @@ fn main() -> Result<(), std::io::Error> {
             }
         }
 
-        to_val = digits[0..point_index + decimal_length]
+        to_val = digits[0..decimal_point_index + decimal_length]
             .iter()
             .collect::<String>()
             .parse::<f64>()
