@@ -4,12 +4,7 @@ use chrono::prelude::*;
 use directories::ProjectDirs;
 use structopt::StructOpt;
 
-fn get_rate(
-    from: &str,
-    to: &str,
-    crypto_list: String,
-    fiat_list: String,
-) -> Result<f64, reqwest::Error> {
+fn get_rate(from: &str, to: &str, crypto_list: String, fiat_list: String) -> f64 {
     let fiat_json: serde_json::Value =
         serde_json::from_str(&fiat_list).expect("The result doesn't seem to be JSON");
     let crypto_json: serde_json::Value =
@@ -22,11 +17,11 @@ fn get_rate(
         1.0 / fiat_object[from].as_f64().unwrap()
     } else if crypto_array
         .iter()
-        .any(|x| x.as_object().unwrap()["symbol"] == from.to_owned())
+        .any(|x| x.as_object().unwrap()["symbol"] == *from)
     {
         let mut c = crypto_array[crypto_array
             .iter()
-            .position(|x| x.as_object().unwrap()["symbol"] == from.to_owned())
+            .position(|x| x.as_object().unwrap()["symbol"] == *from)
             .unwrap()]["price"]
             .to_string();
 
@@ -43,11 +38,11 @@ fn get_rate(
         1.0 / fiat_object[to].as_f64().unwrap()
     } else if crypto_array
         .iter()
-        .any(|x| x.as_object().unwrap()["symbol"] == to.to_owned())
+        .any(|x| x.as_object().unwrap()["symbol"] == *to)
     {
         let mut c = crypto_array[crypto_array
             .iter()
-            .position(|x| x.as_object().unwrap()["symbol"] == to.to_owned())
+            .position(|x| x.as_object().unwrap()["symbol"] == *to)
             .unwrap()]["price"]
             .to_string();
 
@@ -60,17 +55,17 @@ fn get_rate(
         )
     };
 
-    Ok(from_val / to_val)
+    from_val / to_val
 }
 
-fn read_cache(path: &String) -> Result<String, std::io::Error> {
+fn read_cache(path: &str) -> Result<String, std::io::Error> {
     match read_to_string(path) {
         Ok(str) => Ok(str),
         Err(why) => panic!("An error occured while reading the cache: {}", why),
     }
 }
 
-fn cache_data(path: &String, data: &String) {
+fn cache_data(path: &str, data: &str) {
     match write(path, data) {
         Ok(_) => (),
         Err(why) => panic!("An error occured during caching: {}", why),
@@ -83,7 +78,7 @@ fn fetch_data(url: &str) -> Result<String, reqwest::Error> {
     Ok(body)
 }
 
-fn init_currency_data() -> Result<(String, String), std::io::Error> {
+fn init_currency_data() -> (String, String) {
     // Define paths to cached files
     let proj_dirs = ProjectDirs::from("rs", "Lunush", "Rates").unwrap();
     let cache_dir = proj_dirs.cache_dir().to_str().unwrap().to_owned();
@@ -92,9 +87,8 @@ fn init_currency_data() -> Result<(String, String), std::io::Error> {
     let last_update_path = format!("{}/last_update", cache_dir)[..].to_owned();
 
     // Create cache directory if it doesn't exist
-    match create_dir_all(&cache_dir) {
-        Err(why) => panic!("Unable to create {} folder:\n\n{}", cache_dir, why),
-        Ok(_) => (),
+    if let Err(why) = create_dir_all(&cache_dir) {
+        panic!("Unable to create {} folder:\n\n{}", cache_dir, why);
     };
 
     // If last_update file does not exist or was updated >3 hours ago, pull the data. Otherwise use
@@ -130,7 +124,7 @@ fn init_currency_data() -> Result<(String, String), std::io::Error> {
         }
     };
 
-    Ok((crypto_list.to_owned(), fiat_list.to_owned()))
+    (crypto_list, fiat_list)
 }
 
 #[derive(Debug, StructOpt)]
@@ -170,7 +164,7 @@ fn parse_args(args: &Args) -> ParsedArgs {
     let arg2 = args.arg2.clone();
     let arg3 = args.arg3.clone();
 
-    if arg1.clone().is_none() {
+    if arg1.is_none() {
         panic!("At least one argument to convert from is expected");
     }
 
@@ -185,22 +179,22 @@ fn parse_args(args: &Args) -> ParsedArgs {
 
         from = arg2.unwrap().to_uppercase();
 
-        to = if arg3.is_some() {
-            arg3.unwrap().to_uppercase()
+        to = if let Some(arg) = arg3 {
+            arg.to_uppercase()
         } else {
             "USD".to_owned()
         };
     } else {
         amount = 1.0;
 
-        from = if arg1.is_some() {
-            arg1.clone().unwrap().to_uppercase()
+        from = if let Some(arg) = arg1 {
+            arg.to_uppercase()
         } else {
             panic!("At least one argument to convert from is expected");
         };
 
-        to = if arg2.is_some() {
-            arg2.unwrap().to_uppercase()
+        to = if let Some(arg) = arg2 {
+            arg.to_uppercase()
         } else {
             "USD".to_owned()
         };
@@ -209,7 +203,7 @@ fn parse_args(args: &Args) -> ParsedArgs {
     ParsedArgs { from, to, amount }
 }
 
-fn main() -> Result<(), std::io::Error> {
+fn main() {
     let args = Args::from_args();
     let ParsedArgs { from, to, amount } = parse_args(&args);
 
@@ -217,14 +211,14 @@ fn main() -> Result<(), std::io::Error> {
     let short = args.short;
     let trim = args.trim;
     let no_formatting = args.no_formatting;
-    let (crypto_list, fiat_list) = init_currency_data()?;
+    let (crypto_list, fiat_list) = init_currency_data();
 
-    let mut to_val = get_rate(&from, &to, crypto_list, fiat_list).unwrap() * &amount;
+    let mut to_val = amount * get_rate(&from, &to, crypto_list, fiat_list);
 
     // If trim set to true, trim all decimals. Show some decimals otherwise.
-    if trim == true {
+    if trim {
         to_val = to_val.floor();
-    } else if no_formatting == false {
+    } else if !no_formatting {
         // 2 decimals if to_val > 1
         // 3 decimals if to_val > .1
         // 4 decimals if to_val > .01
@@ -237,8 +231,14 @@ fn main() -> Result<(), std::io::Error> {
 
         // If to_val < 1, search for the first 0 and when found trim the rest - 2.
         if to_val < 1.0 && digits[decimal_point_index + 1].to_digit(10).unwrap() == 0 {
-            for digit in decimal_point_index + 1..digits.len() {
+            /* for digit in decimal_point_index + 1..digits.len() {
                 if digits[digit] != '0' {
+                    break;
+                }
+                decimal_length += 1;
+            } */
+            for digit in digits.iter().skip(decimal_point_index + 1) {
+                if *digit != '0' {
                     break;
                 }
                 decimal_length += 1;
@@ -252,11 +252,9 @@ fn main() -> Result<(), std::io::Error> {
             .unwrap();
     }
 
-    if short == true {
+    if short {
         println!("{}", to_val);
     } else {
         println!("{} {} = {} {}", amount, from, to_val, to);
     };
-
-    Ok(())
 }
