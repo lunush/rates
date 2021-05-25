@@ -475,6 +475,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a60c7ce501c71e03a9c9c0d35b861413ae925bd979cc7a4e30d060069aaac8d"
 
 [[package]]
+name = "minidom"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe549115a674f5ec64c754d85e37d6f42664bd0ef4ffb62b619489ad99c6cb1a"
+dependencies = [
+ "quick-xml",
+]
+
+[[package]]
 name = "mio"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -625,6 +634,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "quick-xml"
+version = "0.17.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe1e430bdcf30c9fdc25053b9c459bb1a4672af4617b6c783d7d91dc17c6bbb0"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
+name = "quickxml_to_serde"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d39e65659f67c1361333657fd6a061dc033b0b75f8a2600b9bd2651b8a5f15e5"
+dependencies = [
+ "minidom",
+ "serde",
+ "serde_derive",
+ "serde_json",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -635,10 +665,11 @@ dependencies = [
 
 [[package]]
 name = "rates"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "chrono",
  "directories",
+ "quickxml_to_serde",
  "reqwest",
  "serde",
  "serde_json",
@@ -771,6 +802,17 @@ name = "serde"
 version = "1.0.123"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "92d5161132722baa40d802cc70b15262b98258453e85e5d1d365c757c73869ae"
+
+[[package]]
+name = "serde_derive"
+version = "1.0.126"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "963a7dbc9895aeac7ac90e74f34a5d5261828f79df35cbed41e10189d3804d43"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "serde_json"

@@ -2,19 +2,43 @@ use std::fs::{create_dir_all, read_to_string, write};
 
 use chrono::prelude::*;
 use directories::ProjectDirs;
+use quickxml_to_serde::{xml_string_to_json, Config};
 use structopt::StructOpt;
 
+// BUG: when user provides the same currency twice, the app shows incorrect results
 fn get_rate(from: &str, to: &str, crypto_list: String, fiat_list: String) -> f64 {
     let fiat_json: serde_json::Value =
         serde_json::from_str(&fiat_list).expect("The result doesn't seem to be JSON");
     let crypto_json: serde_json::Value =
         serde_json::from_str(&crypto_list).expect("The result doesn't seem to be JSON");
 
-    let fiat_object = fiat_json["rates"].as_object().unwrap();
+    let fiat_object = fiat_json["Envelope"]["Cube"]["Cube"]["Cube"]
+        .as_array()
+        .unwrap();
+
     let crypto_array = crypto_json["data"]["coins"].as_array().unwrap();
 
-    let from_val = if fiat_object.contains_key(from) {
-        1.0 / fiat_object[from].as_f64().unwrap()
+    let usd_to_eur_rate = fiat_object[fiat_object
+        .iter()
+        .position(|x| x.as_object().unwrap()["@currency"] == *"USD")
+        .unwrap()]["@rate"]
+        .to_string()
+        .parse::<f64>()
+        .unwrap();
+
+    let from_val = if *from == *"EUR" {
+        1.0 / usd_to_eur_rate
+    } else if fiat_object
+        .iter()
+        .any(|x| x.as_object().unwrap()["@currency"] == *from)
+    {
+        let f = fiat_object[fiat_object
+            .iter()
+            .position(|x| x.as_object().unwrap()["@currency"] == *from)
+            .unwrap()]["@rate"]
+            .to_string();
+
+        1.0 / f.parse::<f64>().unwrap() / usd_to_eur_rate
     } else if crypto_array
         .iter()
         .any(|x| x.as_object().unwrap()["symbol"] == *from)
@@ -34,8 +58,21 @@ fn get_rate(from: &str, to: &str, crypto_list: String, fiat_list: String) -> f64
         )
     };
 
-    let to_val = if fiat_object.contains_key(to) {
-        1.0 / fiat_object[to].as_f64().unwrap()
+    let to_val = if *to == *"EUR" {
+        1.0 / usd_to_eur_rate
+    } else if fiat_object
+        .iter()
+        .any(|x| x.as_object().unwrap()["@currency"] == *to)
+    {
+        let f = fiat_object[fiat_object
+            .iter()
+            .position(|x| x.as_object().unwrap()["@currency"] == *to)
+            .unwrap()]["@rate"]
+            .to_string()
+            .parse::<f64>()
+            .unwrap();
+
+        1.0 / f / usd_to_eur_rate
     } else if crypto_array
         .iter()
         .any(|x| x.as_object().unwrap()["symbol"] == *to)
@@ -78,6 +115,13 @@ fn fetch_data(url: &str) -> Result<String, reqwest::Error> {
     Ok(body)
 }
 
+fn get_fiat_currency_json() -> Result<String, reqwest::Error> {
+    let xml = fetch_data("https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml").unwrap();
+    let json = xml_string_to_json(xml, &Config::new_with_defaults()).unwrap();
+
+    Ok(serde_json::to_string(&json).unwrap())
+}
+
 fn init_currency_data() -> (String, String) {
     // Define paths to cached files
     let proj_dirs = ProjectDirs::from("rs", "Lunush", "Rates").unwrap();
@@ -104,7 +148,7 @@ fn init_currency_data() -> (String, String) {
 
             if last_update_time + HOUR * 3 < now {
                 crypto_list = fetch_data("https://api.coinranking.com/v2/coins").unwrap();
-                fiat_list = fetch_data("https://api.ratesapi.io/api/latest?base=USD").unwrap();
+                fiat_list = get_fiat_currency_json().unwrap();
 
                 cache_data(&crypto_list_path, &crypto_list);
                 cache_data(&fiat_list_path, &fiat_list);
@@ -116,7 +160,7 @@ fn init_currency_data() -> (String, String) {
         }
         Err(_) => {
             crypto_list = fetch_data("https://api.coinranking.com/v2/coins").unwrap();
-            fiat_list = fetch_data("https://api.ratesapi.io/api/latest?base=USD").unwrap();
+            fiat_list = get_fiat_currency_json().unwrap();
 
             cache_data(&crypto_list_path, &crypto_list);
             cache_data(&fiat_list_path, &fiat_list);
@@ -136,7 +180,7 @@ struct Args {
     /// Currency to convert from
     arg2: Option<String>,
 
-    /// (Optional) Currency to convert to. Defaults to USD if not provided
+    /// (Optional) Currency to convert to. Defaults to EUR if not provided
     arg3: Option<String>,
 
     /// Show only the result
@@ -182,7 +226,7 @@ fn parse_args(args: &Args) -> ParsedArgs {
         to = if let Some(arg) = arg3 {
             arg.to_uppercase()
         } else {
-            "USD".to_owned()
+            "EUR".to_owned()
         };
     } else {
         amount = 1.0;
@@ -196,7 +240,7 @@ fn parse_args(args: &Args) -> ParsedArgs {
         to = if let Some(arg) = arg2 {
             arg.to_uppercase()
         } else {
-            "USD".to_owned()
+            "EUR".to_owned()
         };
     }
 
@@ -215,28 +259,26 @@ fn main() {
 
     let mut to_val = amount * get_rate(&from, &to, crypto_list, fiat_list);
 
+    let digits = to_val.to_string().chars().collect::<Vec<_>>();
+
     // If trim set to true, trim all decimals. Show some decimals otherwise.
     if trim {
         to_val = to_val.floor();
-    } else if !no_formatting {
+    } else if !no_formatting && digits.len() > 3 {
         // 2 decimals if to_val > 1
         // 3 decimals if to_val > .1
         // 4 decimals if to_val > .01
         // etc
-        let digits = to_val.to_string().chars().collect::<Vec<_>>();
         let mut decimal_length = 3;
 
         // Find the decimal point index
-        let decimal_point_index = digits.iter().position(|x| *x == '.').unwrap();
+        let decimal_point_index = digits.iter().position(|x| *x == '.').unwrap_or(0);
 
         // If to_val < 1, search for the first 0 and when found trim the rest - 2.
-        if to_val < 1.0 && digits[decimal_point_index + 1].to_digit(10).unwrap() == 0 {
-            /* for digit in decimal_point_index + 1..digits.len() {
-                if digits[digit] != '0' {
-                    break;
-                }
-                decimal_length += 1;
-            } */
+        if to_val < 1.0
+            && decimal_point_index != 0
+            && digits[decimal_point_index + 1].to_digit(10).unwrap() == 0
+        {
             for digit in digits.iter().skip(decimal_point_index + 1) {
                 if *digit != '0' {
                     break;
