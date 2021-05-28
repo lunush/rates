@@ -15,7 +15,7 @@ pkgin install rates
 
 ### [AUR](https://aur.archlinux.org/packages/rates-git/)
 ```sh
-paru -Syu rates-bin
+paru -Syu rates-git
 ```
 
 ### [Releases](https://github.com/lunush/rates/releases)
