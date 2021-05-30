@@ -174,14 +174,17 @@ fn init_currency_data() -> (String, String) {
 #[derive(Debug, StructOpt)]
 #[structopt(name = "rates", about = "Get financial data in your terminal")]
 struct Args {
-    /// (Optional) Amount of currency to convert from
+    /// (Optional) Amount
     arg1: Option<String>,
 
     /// Currency to convert from
     arg2: Option<String>,
 
-    /// (Optional) Currency to convert to. Defaults to EUR if not provided
+    /// (Optional) "to"
     arg3: Option<String>,
+
+    /// Currency to convert to. Defaults to EUR if not provided
+    arg4: Option<String>,
 
     /// Show only the result
     #[structopt(short = "s", long = "short")]
@@ -207,9 +210,10 @@ fn parse_args(args: &Args) -> ParsedArgs {
     let arg1 = args.arg1.clone();
     let arg2 = args.arg2.clone();
     let arg3 = args.arg3.clone();
+    let arg4 = args.arg4.clone();
 
     if arg1.is_none() {
-        panic!("At least one argument to convert from is expected");
+        panic!("At least one argument to convert from is required");
     }
 
     let is_arg1_num = arg1.clone().unwrap().parse::<f64>().is_ok();
@@ -223,11 +227,19 @@ fn parse_args(args: &Args) -> ParsedArgs {
 
         from = arg2.unwrap().to_uppercase();
 
-        to = if let Some(arg) = arg3 {
-            arg.to_uppercase()
-        } else {
-            "EUR".to_owned()
-        };
+        to = match arg3 {
+            Some(arg) => {
+                if arg == *"to" {
+                    match arg4 {
+                        Some(last_arg) => last_arg.to_uppercase(),
+                        None => "EUR".to_owned(),
+                    }
+                } else {
+                    arg.to_uppercase()
+                }
+            }
+            None => "EUR".to_owned(),
+        }
     } else {
         amount = 1.0;
 
@@ -237,11 +249,19 @@ fn parse_args(args: &Args) -> ParsedArgs {
             panic!("At least one argument to convert from is expected");
         };
 
-        to = if let Some(arg) = arg2 {
-            arg.to_uppercase()
-        } else {
-            "EUR".to_owned()
-        };
+        to = match arg2 {
+            Some(arg) => {
+                if arg == *"to" {
+                    match arg3 {
+                        Some(last_arg) => last_arg.to_uppercase(),
+                        None => "EUR".to_owned(),
+                    }
+                } else {
+                    arg.to_uppercase()
+                }
+            }
+            None => "EUR".to_owned(),
+        }
     }
 
     ParsedArgs { from, to, amount }
@@ -261,6 +281,7 @@ fn main() {
 
     let digits = to_val.to_string().chars().collect::<Vec<_>>();
 
+    // BUG: Sometimes it crashes. It is not totally clear why yet.
     // If trim set to true, trim all decimals. Show some decimals otherwise.
     if trim {
         to_val = to_val.floor();
