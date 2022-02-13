@@ -5,7 +5,6 @@ use directories::ProjectDirs;
 use quickxml_to_serde::{xml_string_to_json, Config};
 use structopt::StructOpt;
 
-// BUG: when user provides the same currency twice, the app shows incorrect results
 fn get_rate(from: &str, to: &str, crypto_list: String, fiat_list: String) -> f64 {
     let fiat_json: serde_json::Value =
         serde_json::from_str(&fiat_list).expect("The result doesn't seem to be JSON");
@@ -17,8 +16,8 @@ fn get_rate(from: &str, to: &str, crypto_list: String, fiat_list: String) -> f64
         .unwrap();
 
     let crypto_array = crypto_json["data"]["coins"].as_array().unwrap();
-
-    let usd_to_eur_rate = fiat_object[fiat_object
+    
+    let eur_to_usd_rate = fiat_object[fiat_object
         .iter()
         .position(|x| x.as_object().unwrap()["@currency"] == *"USD")
         .unwrap()]["@rate"]
@@ -27,7 +26,7 @@ fn get_rate(from: &str, to: &str, crypto_list: String, fiat_list: String) -> f64
         .unwrap();
 
     let from_val = if *from == *"EUR" {
-        1.0 / usd_to_eur_rate
+         eur_to_usd_rate
     } else if fiat_object
         .iter()
         .any(|x| x.as_object().unwrap()["@currency"] == *from)
@@ -38,7 +37,7 @@ fn get_rate(from: &str, to: &str, crypto_list: String, fiat_list: String) -> f64
             .unwrap()]["@rate"]
             .to_string();
 
-        1.0 / f.parse::<f64>().unwrap() / usd_to_eur_rate
+        1.0/f.parse::<f64>().unwrap() * eur_to_usd_rate
     } else if crypto_array
         .iter()
         .any(|x| x.as_object().unwrap()["symbol"] == *from)
@@ -59,7 +58,7 @@ fn get_rate(from: &str, to: &str, crypto_list: String, fiat_list: String) -> f64
     };
 
     let to_val = if *to == *"EUR" {
-        1.0 / usd_to_eur_rate
+        eur_to_usd_rate
     } else if fiat_object
         .iter()
         .any(|x| x.as_object().unwrap()["@currency"] == *to)
@@ -72,7 +71,7 @@ fn get_rate(from: &str, to: &str, crypto_list: String, fiat_list: String) -> f64
             .parse::<f64>()
             .unwrap();
 
-        1.0 / f / usd_to_eur_rate
+        1.0 /f * eur_to_usd_rate
     } else if crypto_array
         .iter()
         .any(|x| x.as_object().unwrap()["symbol"] == *to)
@@ -281,7 +280,6 @@ fn main() {
 
     let digits = to_val.to_string().chars().collect::<Vec<_>>();
 
-    // BUG: Sometimes it crashes. It is not totally clear why yet.
     // If trim set to true, trim all decimals. Show some decimals otherwise.
     if trim {
         to_val = to_val.floor();
