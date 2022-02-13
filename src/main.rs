@@ -16,7 +16,7 @@ fn get_rate(from: &str, to: &str, crypto_list: String, fiat_list: String) -> f64
         .unwrap();
 
     let crypto_array = crypto_json["data"]["coins"].as_array().unwrap();
-    
+
     let eur_to_usd_rate = fiat_object[fiat_object
         .iter()
         .position(|x| x.as_object().unwrap()["@currency"] == *"USD")
@@ -26,7 +26,7 @@ fn get_rate(from: &str, to: &str, crypto_list: String, fiat_list: String) -> f64
         .unwrap();
 
     let from_val = if *from == *"EUR" {
-         eur_to_usd_rate
+        eur_to_usd_rate
     } else if fiat_object
         .iter()
         .any(|x| x.as_object().unwrap()["@currency"] == *from)
@@ -37,7 +37,7 @@ fn get_rate(from: &str, to: &str, crypto_list: String, fiat_list: String) -> f64
             .unwrap()]["@rate"]
             .to_string();
 
-        1.0/f.parse::<f64>().unwrap() * eur_to_usd_rate
+        1.0 / f.parse::<f64>().unwrap() * eur_to_usd_rate
     } else if crypto_array
         .iter()
         .any(|x| x.as_object().unwrap()["symbol"] == *from)
@@ -71,7 +71,7 @@ fn get_rate(from: &str, to: &str, crypto_list: String, fiat_list: String) -> f64
             .parse::<f64>()
             .unwrap();
 
-        1.0 /f * eur_to_usd_rate
+        1.0 / f * eur_to_usd_rate
     } else if crypto_array
         .iter()
         .any(|x| x.as_object().unwrap()["symbol"] == *to)
