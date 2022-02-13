@@ -121,15 +121,13 @@ fn get_fiat_currency_json() -> Result<String, reqwest::Error> {
     Ok(serde_json::to_string(&json).unwrap())
 }
 
-fn init_currency_data() -> (String, String) {
-    // Define paths to cached files
+fn init_currency_data(force_cache_update: bool) -> (String, String) {
     let proj_dirs = ProjectDirs::from("rs", "Lunush", "Rates").unwrap();
     let cache_dir = proj_dirs.cache_dir().to_str().unwrap().to_owned();
     let crypto_list_path = format!("{}/crypto_list.json", cache_dir)[..].to_owned();
     let fiat_list_path = format!("{}/fiat_list.json", cache_dir)[..].to_owned();
     let last_update_path = format!("{}/last_update", cache_dir)[..].to_owned();
 
-    // Create cache directory if it doesn't exist
     if let Err(why) = create_dir_all(&cache_dir) {
         panic!("Unable to create {} folder:\n\n{}", cache_dir, why);
     };
@@ -145,7 +143,7 @@ fn init_currency_data() -> (String, String) {
             let last_update_time = time.parse::<i64>().unwrap();
             const HOUR: i64 = 3600;
 
-            if last_update_time + HOUR * 3 < now {
+            if force_cache_update || last_update_time + HOUR * 3 < now {
                 crypto_list = fetch_data("https://api.coinranking.com/v2/coins").unwrap();
                 fiat_list = get_fiat_currency_json().unwrap();
 
@@ -194,8 +192,12 @@ struct Args {
     trim: bool,
 
     /// Do not format the result
-    #[structopt(short = "F", long = "no-formatting")]
+    #[structopt(short = "F", long = "noformatting")]
     no_formatting: bool,
+
+    /// Forcefully update currency data
+    #[structopt(short = "f", long = "force")]
+    force_cache_update: bool,
 }
 
 #[derive(Debug)]
@@ -270,11 +272,11 @@ fn main() {
     let args = Args::from_args();
     let ParsedArgs { from, to, amount } = parse_args(&args);
 
-    // Define values
     let short = args.short;
     let trim = args.trim;
     let no_formatting = args.no_formatting;
-    let (crypto_list, fiat_list) = init_currency_data();
+    let force_cache_update = args.force_cache_update;
+    let (crypto_list, fiat_list) = init_currency_data(force_cache_update);
 
     let mut to_val = amount * get_rate(&from, &to, crypto_list, fiat_list);
 
