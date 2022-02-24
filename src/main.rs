@@ -281,7 +281,7 @@ fn main() {
     let mut to_val = amount * get_rate(&from, &to, crypto_list, fiat_list);
 
     let digits = to_val.to_string().chars().collect::<Vec<_>>();
-
+    
     // If trim set to true, trim all decimals. Show some decimals otherwise.
     if trim {
         to_val = to_val.floor();
@@ -298,7 +298,7 @@ fn main() {
         // If to_val < 1, search for the first 0 and when found trim the rest - 2.
         if to_val < 1.0
             && decimal_point_index != 0
-            && digits[decimal_point_index + 1].to_digit(10).unwrap() == 0
+            // && digits[decimal_point_index + 1].to_digit(10).unwrap() == 0
         {
             for digit in digits.iter().skip(decimal_point_index + 1) {
                 if *digit != '0' {
@@ -308,7 +308,14 @@ fn main() {
             }
         }
 
-        to_val = digits[0..decimal_point_index + decimal_length]
+        let to_val_prettified_length = decimal_point_index + decimal_length;
+        let to_val_length = if  to_val_prettified_length > digits.len() {
+            digits.len()
+        } else {
+            to_val_prettified_length
+        };
+
+        to_val = digits[0..to_val_length]
             .iter()
             .collect::<String>()
             .parse::<f64>()
