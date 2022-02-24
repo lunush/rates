@@ -1,6 +1,6 @@
 [package]
 name = "rates"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["lunush"]
 edition = "2018"
 description = "CLI tool to get currency exchange rates in your terminal"
